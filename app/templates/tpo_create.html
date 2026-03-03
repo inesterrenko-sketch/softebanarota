@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">ТПО — заполнение</h1>
+    <div class="text-muted small">Клиент: <span class="fw-semibold">{{ prefill.fio }}</span> (ID {{ client.id }})</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/tpo">← к выбору</a>
+    <a class="btn btn-outline-primary" href="/settings">Курсы валют</a>
+  </div>
+</div>
+
+<form action="/tpo/generate" method="post" enctype="multipart/form-data" class="card shadow-sm border-0">
+  <div class="card-body">
+    <input type="hidden" name="client_id" value="{{ client.id }}" />
+
+    <div class="row g-3">
+      <div class="col-12">
+        <h2 class="h6 mb-2">Данные плательщика</h2>
+        <div class="text-muted small">Часть полей в документе будет заполнена КАПСОМ автоматически.</div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">ФИО</label>
+        <input class="form-control" name="fio" value="{{ prefill.fio }}" required />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Телефон (опционально)</label>
+        <input class="form-control" name="phone" value="{{ client.phone }}" />
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Адрес</label>
+        <textarea class="form-control" name="address" rows="2">{{ prefill.address }}</textarea>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Паспорт</label>
+        <input class="form-control" name="passport" value="{{ prefill.passport }}" />
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">Дата выдачи паспорта</label>
+        <input class="form-control" type="date" name="vydan" id="vydan" />
+        <div class="form-text">Сохранено: {{ prefill.vydan }}</div>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">Кем выдан (кратко)</label>
+        <input class="form-control" name="organ" value="{{ prefill.organ }}" />
+      </div>
+
+      <div class="col-12">
+        <h2 class="h6 mt-2 mb-2">Данные авто</h2>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Марка/модель</label>
+        <input class="form-control" name="car_model" value="{{ prefill.car_model }}" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">VIN</label>
+        <input class="form-control" name="vin" value="{{ prefill.vin }}" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Объем (см³)</label>
+        <input class="form-control" name="obem" value="{{ prefill.obem }}" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Дата выпуска</label>
+        <input class="form-control" type="date" name="vypusk" id="vypusk" />
+        <div class="form-text">Сохранено: {{ prefill.vypusk }}</div>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Первая регистрация</label>
+        <input class="form-control" type="date" name="registr" id="registr" />
+        <div class="form-text">Сохранено: {{ prefill.registr }}</div>
+      </div>
+
+      <div class="col-12">
+        <h2 class="h6 mt-2 mb-2">Суммы (из договора можно подставить кнопками)</h2>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Стоимость авто (RUB)</label>
+        <input class="form-control" name="price_rub" id="price_rub" value="{{ price_rub }}" placeholder="например: 396580" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Таможенная пошлина (RUB)</label>
+        <input class="form-control" name="cust_rub" id="cust_rub" value="{{ cust_rub }}" placeholder="например: 112000" />
+      </div>
+
+      <div class="col-12 d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-secondary" onclick="setAmount('price_rub', '{{ client.dkp_amount|e }}')">Подставить сумму ДКП</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="setAmount('cust_rub', '{{ client.customs_amount|e }}')">Подставить тамож. пошлину</button>
+        <button type="button" class="btn btn-outline-primary" onclick="previewCalc()">Пересчитать (превью)</button>
+      </div>
+
+      <div class="col-12">
+        <div class="alert alert-dark border-0" id="preview" style="display:none;"></div>
+      </div>
+
+      <div class="col-12">
+        <h2 class="h6 mt-2 mb-2">QR-код (опционально)</h2>
+        <div class="text-muted small">Если в шаблоне есть плейсхолдер <code>{{'{{QR CODE}}'}}</code>, картинка встанет туда.</div>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Файл QR (png/jpg)</label>
+        <input class="form-control" type="file" name="qr" accept="image/*" />
+      </div>
+
+      <div class="col-12 d-grid mt-2">
+        <button class="btn btn-success" type="submit">Сгенерировать ТПО (DOCX)</button>
+      </div>
+
+      <div class="col-12">
+        <div class="text-muted small">
+          Курсы: 1 RUB → {{ '%.4f' % currency['rub_to_byn'] }} BYN, 1 EUR = {{ '%.4f' % currency['eur_byn'] }} BYN, 1 USD = {{ '%.4f' % currency['usd_byn'] }} BYN.
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+  function ddmmyyyy_to_ymd(v) {
+    const m = (v || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (!m) return '';
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  }
+
+  function setAmount(id, v) {
+    if (!v) return;
+    const el = document.getElementById(id);
+    if (el) el.value = v;
+  }
+
+  function toFloat(val) {
+    const s = (val || '').toString().replace(/\s+/g,'').replace(',', '.');
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function previewCalc() {
+    const priceRub = toFloat(document.getElementById('price_rub').value);
+    const custRub = toFloat(document.getElementById('cust_rub').value);
+    const rubToByn = parseFloat("{{ currency['rub_to_byn'] }}") || 0.04;
+    const eurByn = parseFloat("{{ currency['eur_byn'] }}") || 4.0;
+    const usdByn = parseFloat("{{ currency['usd_byn'] }}") || 3.4;
+
+    const priceByn = priceRub * rubToByn;
+    const custByn = custRub * rubToByn;
+    const priceEur = eurByn ? (priceByn / eurByn) : 0;
+    const priceUsd = usdByn ? (priceByn / usdByn) : 0;
+    const percent = priceByn ? (custByn / priceByn * 100.0) : 0;
+
+    const box = document.getElementById('preview');
+    box.style.display = '';
+    box.innerHTML = `
+      <div class="fw-semibold mb-1">Превью расчёта</div>
+      <div class="small">
+        <div>PRICE (BYN): <span class="fw-semibold">${priceByn.toFixed(2)}</span></div>
+        <div>CUST (BYN): <span class="fw-semibold">${custByn.toFixed(2)}</span></div>
+        <div>PRICE_EUR: <span class="fw-semibold">${priceEur.toFixed(2)}</span></div>
+        <div>P_usd: <span class="fw-semibold">${priceUsd.toFixed(2)}</span></div>
+        <div>PERCENT: <span class="fw-semibold">${percent.toFixed(2)}%</span></div>
+        <div class="text-muted mt-2">KURS (1 EUR = BYN): ${eurByn.toFixed(4)}</div>
+      </div>
+    `;
+  }
+
+  // init date inputs from saved dd.mm.yyyy
+  document.getElementById('vydan').value = ddmmyyyy_to_ymd("{{ prefill.vydan }}");
+  document.getElementById('vypusk').value = ddmmyyyy_to_ymd("{{ prefill.vypusk }}");
+  document.getElementById('registr').value = ddmmyyyy_to_ymd("{{ prefill.registr }}");
+
+  // auto preview on load
+  previewCalc();
+</script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">Создание счёта</h1>
+    <div class="text-muted small">Клиент: <span class="fw-semibold">{{ client.fio }}</span> (ID {{ client.id }})</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/invoice">← к выбору клиента</a>
+    <a class="btn btn-outline-primary" href="/documents">Создать документ</a>
+  </div>
+</div>
+
+<form action="/invoice/generate" method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+    <input type="hidden" name="client_id" value="{{ client.id }}" />
+
+    <div class="row g-3">
+      <div class="col-12">
+        <h2 class="h6 mb-2">Данные клиента (обновятся после генерации)</h2>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">ФИО</label>
+        <input class="form-control" name="fio" value="{{ client.fio }}" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Телефон</label>
+        <input class="form-control" name="phone" value="{{ client.phone }}" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Паспорт (серия/номер)</label>
+        <input class="form-control" name="passport" value="{{ client.passport }}" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Дата выдачи паспорта</label>
+        <input class="form-control" type="date" name="vydan" id="vydan" />
+        <div class="form-text">Сохранено: {{ client.vydan }}</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Кем выдан паспорт</label>
+        <textarea class="form-control" name="organ" rows="2">{{ client.organ }}</textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Адрес</label>
+        <textarea class="form-control" name="address" rows="2">{{ client.address }}</textarea>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">№ договора</label>
+        <input class="form-control" name="contract_no" value="{{ client.contract_no }}" />
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Дата договора</label>
+        <input class="form-control" type="date" name="contract_date" id="contract_date" />
+        <div class="form-text">Сохранено: {{ client.contract_date }}</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Модель авто</label>
+        <input class="form-control" name="car_model" value="{{ client.car_model }}" />
+      </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <div class="row g-3">
+      <div class="col-12">
+        <h2 class="h6 mb-2">Параметры счёта</h2>
+      </div>
+      <div class="col-12 col-md-8">
+        <label class="form-label">Назначение платежа</label>
+        <select class="form-select" name="purpose" id="purpose">
+          {% for p in purposes %}
+            <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">Сумма</label>
+        <input class="form-control" name="amount" id="amount" placeholder="например: 396580" required />
+        <div class="form-text">Автоподстановка: таможенная / ДКП</div>
+      </div>
+      <div class="col-12 d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-secondary" onclick="setAmount('{{ client.customs_amount|e }}')">Подставить тамож. пошлину</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="setAmount('{{ client.dkp_amount|e }}')">Подставить сумму ДКП</button>
+      </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <div class="row g-3">
+      <div class="col-12">
+        <h2 class="h6 mb-2">Реквизиты получателя</h2>
+      </div>
+      <div class="col-12">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="req_mode" id="req_auto" value="auto" checked onchange="toggleReqMode()">
+          <label class="form-check-label" for="req_auto">Вставить текстом (авто-распознавание)</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="req_mode" id="req_manual" value="manual" onchange="toggleReqMode()">
+          <label class="form-check-label" for="req_manual">Ввести вручную</label>
+        </div>
+      </div>
+
+      <div class="col-12" id="req_text_wrap">
+        <label class="form-label">Реквизиты одним текстом</label>
+        <textarea class="form-control" name="req_text" rows="6" placeholder="Вставь реквизиты сюда"></textarea>
+        <div class="form-text">Алгоритм распознавания портирован из твоего Telegram-бота.</div>
+      </div>
+
+      <div class="col-12" id="req_manual_wrap" style="display:none;">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Получатель</label>
+            <input class="form-control" name="recipient_fio" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Банк получателя</label>
+            <input class="form-control" name="bank_name" />
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">БИК</label>
+            <input class="form-control" name="bank_bik" />
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">ИНН банка</label>
+            <input class="form-control" name="bank_inn" />
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">КПП</label>
+            <input class="form-control" name="bank_kpp" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Корр. счёт</label>
+            <input class="form-control" name="bank_ks" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Счёт получателя</label>
+            <input class="form-control" name="bank_rs" />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="want_pdf" id="want_pdf" checked>
+          <label class="form-check-label" for="want_pdf">Скачать PDF (если установлен LibreOffice), иначе DOCX</label>
+        </div>
+      </div>
+
+      <div class="col-12 d-grid mt-2">
+        <button class="btn btn-success" type="submit">Сгенерировать счёт</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+  function ddmmyyyy_to_ymd(v) {
+    const m = (v || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (!m) return '';
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  }
+
+  function setAmount(v) {
+    if (!v) return;
+    document.getElementById('amount').value = v;
+  }
+
+  function toggleReqMode() {
+    const manual = document.getElementById('req_manual').checked;
+    document.getElementById('req_text_wrap').style.display = manual ? 'none' : '';
+    document.getElementById('req_manual_wrap').style.display = manual ? '' : 'none';
+  }
+
+  // init date inputs from saved dd.mm.yyyy
+  const vydanSaved = "{{ client.vydan }}";
+  const contractDateSaved = "{{ client.contract_date }}";
+  document.getElementById('vydan').value = ddmmyyyy_to_ymd(vydanSaved);
+  document.getElementById('contract_date').value = ddmmyyyy_to_ymd(contractDateSaved);
+
+  // default amount depending on purpose
+  const customs = "{{ client.customs_amount|e }}";
+  const dkp = "{{ client.dkp_amount|e }}";
+  const purpose = document.getElementById('purpose');
+  const amount = document.getElementById('amount');
+  function autoAmount() {
+    const v = purpose.value || '';
+    if (v.includes('тамож')) { if (customs) amount.value = customs; }
+    if (v.includes('ДКП')) { if (dkp) amount.value = dkp; }
+  }
+  purpose.addEventListener('change', autoAmount);
+  autoAmount();
+</script>
+{% endblock %}

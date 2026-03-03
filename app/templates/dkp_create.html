@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">ДКП — заполнение</h1>
+    <div class="text-muted small">Клиент: <span class="fw-semibold">{{ prefill.fio }}</span> (ID {{ client.id }})</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/dkp">← к выбору</a>
+  </div>
+</div>
+
+<form action="/dkp/generate" method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+    <input type="hidden" name="client_id" value="{{ client.id }}" />
+
+    <div class="row g-3">
+      <!-- Дата -->
+      <div class="col-12">
+        <h2 class="h6 mb-2">Дата договора</h2>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">Дата (дд.мм.гггг)</label>
+        <input class="form-control" name="date" id="date" placeholder="16.01.2026" />
+      </div>
+
+      <!-- Данные покупателя -->
+      <div class="col-12">
+        <h2 class="h6 mt-3 mb-2">Данные покупателя</h2>
+        <div class="text-muted small">ФИО будет транслитерировано, адрес — переведен на немецкий</div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">ФИО (на русском)</label>
+        <input class="form-control" name="fio" id="fio" value="{{ prefill.fio }}" required />
+        <div class="form-text" id="fioPreview">Латиница: <span class="fw-semibold">{{ prefill.fio_translit }}</span></div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Паспорт (XX XX XXXXXX)</label>
+        <input class="form-control" name="passport" value="{{ prefill.passport }}" required />
+      </div>
+
+      <div class="col-12 col-md-8">
+        <label class="form-label">Адрес (на русском)</label>
+        <div class="input-group">
+          <textarea class="form-control" name="address" id="address" rows="2">{{ prefill.address }}</textarea>
+          <button class="btn btn-outline-primary" type="button" onclick="translateAddress()">Перевести →</button>
+        </div>
+        <div class="form-text" id="addressPreview"></div>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Телефон</label>
+        <input class="form-control" name="phone" value="{{ prefill.phone }}" placeholder="+7 912 332 0863" />
+      </div>
+
+      <!-- Компания -->
+      <div class="col-12">
+        <h2 class="h6 mt-3 mb-2">Компания-продавец</h2>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Компания</label>
+        <select class="form-select" name="company" required>
+          {% for c in companies %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Данные автомобиля -->
+      <div class="col-12">
+        <h2 class="h6 mt-3 mb-2">Данные автомобиля</h2>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">Марка/Модель</label>
+        <input class="form-control" name="car" value="{{ prefill.car }}" placeholder="Toyota RAV4" required />
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label">VIN (17 символов)</label>
+        <input class="form-control" name="vin" value="{{ prefill.vin }}" placeholder="JTMW43FV80D135612" maxlength="17" style="text-transform: uppercase" required />
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">Год выпуска</label>
+        <input class="form-control" name="year" type="number" min="1990" max="2030" value="{{ prefill.year }}" placeholder="2023" required />
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">Цвет</label>
+        <input class="form-control" name="color" value="{{ prefill.color }}" placeholder="Schwarz" required />
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">Объем (см³)</label>
+        <input class="form-control" name="obem" type="number" value="{{ prefill.obem }}" placeholder="1987" required />
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">Топливо</label>
+        <select class="form-select" name="engine">
+          <option value="Benzin" selected>Benzin</option>
+          <option value="Diesel">Diesel</option>
+          <option value="Hybrid">Hybrid</option>
+          <option value="Elektro">Elektro</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">Первая регистрация (мм.гггг)</label>
+        <input class="form-control" name="regdate" value="{{ prefill.regdate }}" placeholder="03.2023" required />
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">Мощность (л.с.)</label>
+        <input class="form-control" name="ps" id="ps" type="number" value="{{ prefill.ps }}" placeholder="175" required />
+        <div class="form-text" id="kwPreview">кВт: —</div>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">КПП</label>
+        <select class="form-select" name="gear">
+          <option value="Automatik" selected>Automatik</option>
+          <option value="Schaltgetriebe">Schaltgetriebe</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">Сидений</label>
+        <input class="form-control" name="seat" type="number" min="1" max="9" value="5" required />
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Пробег (км)</label>
+        <input class="form-control" name="probeg" type="number" value="{{ prefill.probeg }}" placeholder="45000" required />
+      </div>
+
+      <div class="col-12 col-md-4">
+        <label class="form-label">Цена (€)</label>
+        <input class="form-control" name="price_eur" id="price" type="number" value="{{ prefill.price_eur }}" placeholder="15000" required />
+        <div class="form-text" id="totalPreview">Итого (+50€): —</div>
+      </div>
+
+      <div class="col-12 d-grid mt-3">
+        <button class="btn btn-success btn-lg" type="submit">🚗 Сгенерировать ДКП (DOCX)</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+// Автозаполнение даты
+document.getElementById('date').value = new Date().toLocaleDateString('ru-RU');
+
+// Транслитерация ФИО в реальном времени
+document.getElementById('fio').addEventListener('input', function() {
+  fetch('/api/translit?text=' + encodeURIComponent(this.value))
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('fioPreview').innerHTML = 'Латиница: <span class="fw-semibold">' + data.translit + '</span>';
+    });
+});
+
+// Перевод адреса
+function translateAddress() {
+  const addr = document.getElementById('address').value;
+  if (!addr) return;
+  
+  document.getElementById('addressPreview').innerHTML = '<span class="text-muted">Перевожу...</span>';
+  
+  fetch('/api/translate?text=' + encodeURIComponent(addr))
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('addressPreview').innerHTML = 'Немецкий: <span class="fw-semibold">' + data.translated + '</span>';
+    })
+    .catch(() => {
+      document.getElementById('addressPreview').innerHTML = '<span class="text-danger">Ошибка перевода</span>';
+    });
+}
+
+// Расчет кВт из л.с.
+document.getElementById('ps').addEventListener('input', function() {
+  const ps = parseFloat(this.value);
+  if (ps > 0) {
+    const kw = (ps * 0.735499).toFixed(1);
+    document.getElementById('kwPreview').innerHTML = 'кВт: <span class="fw-semibold">' + kw + '</span>';
+  } else {
+    document.getElementById('kwPreview').innerHTML = 'кВт: —';
+  }
+});
+
+// Расчет итого
+document.getElementById('price').addEventListener('input', function() {
+  const price = parseInt(this.value) || 0;
+  const total = price + 50;
+  document.getElementById('totalPreview').innerHTML = 'Итого (+50€): <span class="fw-semibold">' + total + ' €</span>';
+});
+</script>
+{% endblock %}

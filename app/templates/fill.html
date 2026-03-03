@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <div class="badge text-bg-light border">{{ t.company }}</div>
+    <h1 class="h4 mb-0 mt-2">{{ t.name }}</h1>
+    <div class="text-muted small">Заполните поля и нажмите «Сгенерировать».</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/documents">← к списку</a>
+    <a class="btn btn-primary" href="/admin/add">+ новый шаблон</a>
+  </div>
+</div>
+
+<form action="/generate/{{ t.id }}" method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+    <div class="row g-3 align-items-end mb-2">
+      <div class="col-12 col-lg-8">
+        <label class="form-label">Клиент (данные сохраняются автоматически)</label>
+        <select class="form-select" id="clientSelect">
+          <option value="">— Новый клиент —</option>
+          {% for c in clients %}
+            <option value="{{ c.id }}">ID {{ c.id }} — {{ c.fio }} — {{ c.car_model }}</option>
+          {% endfor %}
+        </select>
+        <div class="form-text">Выбери клиента, чтобы быстро подставить ФИО/паспорт/адрес/... Затем редактируй поля как надо.</div>
+      </div>
+      <div class="col-12 col-lg-4 d-grid">
+        <button class="btn btn-outline-primary" type="button" onclick="loadClient()">Подставить данные клиента</button>
+      </div>
+    </div>
+
+    <!-- Ссылка на профиль клиента -->
+    <div id="clientProfileLink" class="alert alert-info d-none mb-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Клиент выбран!</strong> После заполнения договора все данные сохранятся в профиле клиента.
+        </div>
+        <a id="profileLink" class="btn btn-sm btn-primary" href="#" target="_blank">Открыть профиль →</a>
+      </div>
+    </div>
+
+    <input type="hidden" name="client_id" id="client_id" value="" />
+
+    <div class="row g-3">
+      {% for f in fields %}
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="{{ f.key }}">{{ f.label }}</label>
+        {% if f.type == 'textarea' %}
+          <textarea class="form-control" id="{{ f.key }}" name="{{ f.key }}" rows="3" placeholder="{{ f.label }}"></textarea>
+        {% else %}
+          <input class="form-control" id="{{ f.key }}" name="{{ f.key }}" type="{{ f.type }}" placeholder="{{ f.label }}" />
+        {% endif %}
+        <div class="form-text">{{ '{{' }}{{ f.key }}{{ '}}' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-4 d-flex flex-wrap gap-2">
+      <button class="btn btn-success" type="submit">Сгенерировать .docx</button>
+      <button class="btn btn-outline-secondary" type="reset" onclick="resetForm()">Очистить</button>
+      <a class="btn btn-outline-primary" href="/admin">Управление шаблонами</a>
+    </div>
+  </div>
+</form>
+
+<script>
+  function ddmmyyyy_to_ymd(v) {
+    const m = (v || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (!m) return v;
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  }
+
+  function showClientProfile(clientId) {
+    if (clientId) {
+      const linkDiv = document.getElementById('clientProfileLink');
+      const profileLink = document.getElementById('profileLink');
+      profileLink.href = `/clients/${clientId}`;
+      linkDiv.classList.remove('d-none');
+    } else {
+      document.getElementById('clientProfileLink').classList.add('d-none');
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('client_id').value = '';
+    document.getElementById('clientSelect').value = '';
+    document.getElementById('clientProfileLink').classList.add('d-none');
+  }
+
+  async function loadClient() {
+    const sel = document.getElementById('clientSelect');
+    const cid = sel.value;
+    document.getElementById('client_id').value = cid;
+    showClientProfile(cid);
+    if (!cid) return;
+
+    const r = await fetch(`/api/clients/${cid}`);
+    if (!r.ok) return;
+    const c = await r.json();
+
+    const map = {
+      'CLIENT_FIO': c.fio,
+      'FIO': c.fio,
+      'PASSPORT': c.passport,
+      'ORGAN': c.organ,
+      'VYDAN': ddmmyyyy_to_ymd(c.vydan),
+      'ADDRESS': c.address,
+      'PHONE': c.phone,
+      'CONTRACT_NO': c.contract_no,
+      'CONTRACT_DATE': ddmmyyyy_to_ymd(c.contract_date),
+      'CAR': c.car_model,
+      'CAR_MODEL': c.car_model,
+      'VIN': c.vin,
+      'OBEM': c.obem,
+      'VYPUSK': c.vypusk,
+      'year_car': c.vypusk,
+      'year car': c.vypusk,
+      'YEAR_CAR': c.vypusk,
+      'REGISTR': c.registr,
+      'Color': c.color,
+      'COLOR': c.color,
+      'color': c.color,
+      'Probeg': c.probeg,
+      'PROBEG': c.probeg,
+      'probeg': c.probeg,
+      'Engine': c.engine,
+      'Delivery': c.delivery,
+    };
+
+    Object.entries(map).forEach(([k, v]) => {
+      const el = document.getElementById(k);
+      if (!el || !v) return;
+      // date inputs expect YYYY-MM-DD
+      if (el.type === 'date') {
+        el.value = v;
+      } else {
+        el.value = v;
+      }
+    });
+  }
+
+  // If user changes selection, just update hidden id
+  document.getElementById('clientSelect').addEventListener('change', (e) => {
+    const cid = e.target.value;
+    document.getElementById('client_id').value = cid;
+    showClientProfile(cid);
+  });
+</script>
+{% endblock %}

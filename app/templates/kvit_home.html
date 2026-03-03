@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">🧾 Квитанция</h1>
+    <div class="text-muted small">Выбери клиента или создай нового → сформируй квитанцию.</div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h6 mb-2">Выбрать клиента</h2>
+        <form id="selectClientForm">
+          <label class="form-label">Клиент</label>
+          <select class="form-select" id="clientSelect">
+            <option value="" selected>— Выбери клиента —</option>
+            {% for c in clients %}
+              <option 
+                value="{{ c.id }}"
+                data-fio="{{ c.fio }}"
+                data-address="{{ c.address }}"
+                data-passport="{{ c.passport }}"
+                data-organ="{{ c.organ }}"
+                data-tpo-summa="{{ c.tpo_summa_byn }}">
+                ID {{ c.id }} — {{ c.fio }} — {{ c.passport }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">Если клиента ещё нет — создай в правом блоке.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h6 mb-2">Создать нового клиента</h2>
+        <form action="/kvit/create" method="post" class="row g-3">
+          <div class="col-12">
+            <label class="form-label">ФИО плательщика</label>
+            <input class="form-control" name="fio" placeholder="ФИО клиента" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Адрес</label>
+            <input class="form-control" name="address" placeholder="г. Минск, ул. Примерная, д. 1" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Паспорт</label>
+            <input class="form-control" name="passport" placeholder="АВ 1234567" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Кем выдан</label>
+            <input class="form-control" name="vydan" placeholder="Отделом ОВИР..." />
+          </div>
+          <div class="col-12 d-grid">
+            <button class="btn btn-success" type="submit">Создать и перейти к заполнению</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-body">
+    <h2 class="h6 mb-3">Заполни данные квитанции</h2>
+    <form action="/kvit/create" method="post" class="row g-3">
+      <input type="hidden" name="client_id" id="clientIdInput" />
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">ФИО плательщика *</label>
+        <input class="form-control" name="fio" id="fioInput" required placeholder="Иванов Иван Иванович" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Адрес *</label>
+        <input class="form-control" name="address" id="addressInput" required placeholder="г. Минск, ул. Примерная, д. 1" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Паспорт *</label>
+        <input class="form-control" name="passport" id="passportInput" required placeholder="АВ 1234567" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Кем выдан *</label>
+        <input class="form-control" name="vydan" id="vydanInput" required placeholder="Отделом ОВИР..." />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Сумма (BYN) *</label>
+        <input class="form-control" name="summa" id="summaInput" required placeholder="1500.00 или 1500,00" />
+        <div class="form-text">Можно ввести: 1500 или 1500.00 или 1500,00. Автоподстановка из ТПО.</div>
+      </div>
+      
+      <div class="col-12 d-grid">
+        <button class="btn btn-primary btn-lg" type="submit">
+          📄 Создать квитанцию
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if clients|length == 0 %}
+  <div class="alert alert-warning mt-4">Клиентов пока нет. Создай нового справа.</div>
+{% endif %}
+
+<script>
+document.getElementById('clientSelect').addEventListener('change', function() {
+  const selected = this.options[this.selectedIndex];
+  if (!selected.value) {
+    document.getElementById('clientIdInput').value = '';
+    document.getElementById('fioInput').value = '';
+    document.getElementById('addressInput').value = '';
+    document.getElementById('passportInput').value = '';
+    document.getElementById('vydanInput').value = '';
+    document.getElementById('summaInput').value = '';
+    return;
+  }
+  
+  document.getElementById('clientIdInput').value = selected.value;
+  document.getElementById('fioInput').value = selected.dataset.fio || '';
+  document.getElementById('addressInput').value = selected.dataset.address || '';
+  document.getElementById('passportInput').value = selected.dataset.passport || '';
+  document.getElementById('vydanInput').value = selected.dataset.organ || '';
+  document.getElementById('summaInput').value = selected.dataset.tpoSumma || '';
+});
+</script>
+
+{% endblock %}

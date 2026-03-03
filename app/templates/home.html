@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4 align-items-start">
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h1 class="h4 mb-2">Заполнение договоров</h1>
+        <p class="text-muted mb-3">Выбираешь компанию (шаблон) → вводишь данные → скачиваешь готовый .docx.</p>
+
+        <label class="form-label mb-1">Компания</label>
+        <select id="company" class="form-select" onchange="filterCards()">
+          <option value="">Все компании</option>
+          {% for c in companies %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+
+        <div class="input-group">
+          <span class="input-group-text">🔎</span>
+          <input id="q" oninput="filterCards()" type="text" class="form-control" placeholder="Поиск по компании/шаблону" />
+        </div>
+        <div class="mt-3 d-grid gap-2">
+          <a class="btn btn-primary" href="/admin/add">Добавить новый шаблон</a>
+          <a class="btn btn-outline-secondary" href="/admin">Управление шаблонами</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-8">
+    <div class="row g-3">
+      {% for t in templates %}
+      <div class="col-12 col-md-6" data-card data-hay="{{ t.company }} {{ t.name }}">
+        <div class="card shadow-sm border-0 card-hover">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <div class="badge text-bg-light border mb-2">{{ t.company }}</div>
+                <h2 class="h6 mb-1">{{ t.name }}</h2>
+                <div class="text-muted small">Полей: {{ t.placeholders|length }}</div>
+              </div>
+            </div>
+            <div class="mt-3 d-grid">
+              <a class="btn btn-outline-primary" href="/t/{{ t.id }}">Открыть</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if templates|length == 0 %}
+      <div class="col-12">
+        <div class="alert alert-warning">Нет шаблонов. Зайди в «Управление» и добавь .docx.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

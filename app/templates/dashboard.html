@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">Главная</h1>
+    <div class="text-muted small">Быстрые действия + последние клиенты</div>
+  </div>
+  <div class="text-muted small">
+    Курсы: 1 RUB → <span class="fw-semibold">{{ '%.4f' % currency['rub_to_byn'] }} BYN</span>
+    <span class="mx-2">•</span>
+    1 EUR = <span class="fw-semibold">{{ '%.4f' % currency['eur_byn'] }} BYN</span>
+    <span class="mx-2">•</span>
+    1 USD = <span class="fw-semibold">{{ '%.4f' % currency['usd_byn'] }} BYN</span>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-4">
+    <a href="/clients" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Меню</div>
+            <div class="h5 mb-0">Все клиенты</div>
+            <div class="text-muted small mt-2">Поиск, редактирование, удаление</div>
+          </div>
+          <div class="display-6">👥</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a href="/documents" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Пункт 1</div>
+            <div class="h5 mb-0">Создать документ</div>
+            <div class="text-muted small mt-2">Выбор компании → заполнение договора</div>
+          </div>
+          <div class="display-6">📄</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a href="/invoice" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Пункт 2</div>
+            <div class="h5 mb-0">Квитанция / счёт</div>
+            <div class="text-muted small mt-2">Выбор клиента → авто-распознавание реквизитов</div>
+          </div>
+          <div class="display-6">🧾</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a href="/tpo" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Пункт 3</div>
+            <div class="h5 mb-0">Таможенный ордер (ТПО)</div>
+            <div class="text-muted small mt-2">Подтягивает суммы из договора + QR</div>
+          </div>
+          <div class="display-6">🚗</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a href="/kvit" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Пункт 4</div>
+            <div class="h5 mb-0">Квитанция</div>
+            <div class="text-muted small mt-2">Квитанция с жирным выделением</div>
+          </div>
+          <div class="display-6">🧾</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a href="/util" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Пункт 5</div>
+            <div class="h5 mb-0">Письмо об утильсборе</div>
+            <div class="text-muted small mt-2">Минская таможня + автоконвертация суммы</div>
+          </div>
+          <div class="display-6">📧</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a href="/proxy" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Пункт 6</div>
+            <div class="h5 mb-0">Доверенность</div>
+            <div class="text-muted small mt-2">Создание доверенности на получение авто</div>
+          </div>
+          <div class="display-6">📋</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-4">
+    <a href="/dkp" class="card shadow-sm border-0 text-decoration-none h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small">Пункт 7</div>
+            <div class="h5 mb-0">ДКП (немецкий)</div>
+            <div class="text-muted small mt-2">Договор купли-продажи авто</div>
+          </div>
+          <div class="display-6">🇩🇪</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0">Последние клиенты</h2>
+          <a class="btn btn-sm btn-outline-secondary" href="/clients">Открыть список</a>
+        </div>
+        {% if clients %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>ФИО</th>
+                  <th>Договор</th>
+                  <th>Авто</th>
+                  <th>Суммы</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in clients[:15] %}
+                <tr>
+                  <td class="text-muted small">{{ c.id }}</td>
+                  <td>
+                    <a href="/client/{{ c.id }}" class="text-decoration-none fw-semibold">{{ c.fio }}</a>
+                    <div class="text-muted small">{{ c.phone or '' }}</div>
+                  </td>
+                  <td>
+                    {{ c.contract_no or '-' }}
+                    {% if c.contract_date %}<div class="small text-muted">{{ c.contract_date }}</div>{% endif %}
+                  </td>
+                  <td>
+                    {{ c.car_model or '-' }}
+                    {% if c.vin %}<div class="small text-muted text-truncate" style="max-width: 100px;">{{ c.vin }}</div>{% endif %}
+                  </td>
+                  <td>
+                    <div class="small">
+                      {% if c.customs_amount %}<div>Таможня: {{ c.customs_amount }}</div>{% endif %}
+                      {% if c.dkp_amount %}<div>ДКП: {{ c.dkp_amount }}</div>{% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Действия
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/client/{{ c.id }}">Открыть профиль</a></li>
+                        <li><a class="dropdown-item" href="/invoice/create?client_id={{ c.id }}">Счёт на оплату</a></li>
+                        <li><a class="dropdown-item" href="/tpo/create?client_id={{ c.id }}">ТПО</a></li>
+                        <li><a class="dropdown-item" href="/proxy/create?client_id={{ c.id }}">Доверенность</a></li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-muted">Клиентов пока нет. Создай договор — данные сохранятся автоматически.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h6 mb-2">Шаблоны договоров</h2>
+        <div class="text-muted small mb-3">Всего: <span class="fw-semibold">{{ templates|length }}</span></div>
+        <div class="d-grid gap-2">
+          <a class="btn btn-outline-secondary" href="/admin">Управление шаблонами</a>
+          <a class="btn btn-outline-secondary" href="/settings">Курсы валют</a>
+        </div>
+        <hr />
+        <div class="text-muted small">Подсказка: при генерации договора данные клиента сохраняются и подтягиваются в «Счёт» и «ТПО».</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

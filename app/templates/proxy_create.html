@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Создание доверенности - ContractFill{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">Создание доверенности</h1>
+    <div class="text-muted small">Клиент: <span class="fw-semibold">{{ client.fio }}</span> (ID {{ client.id }})</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/proxy">← к выбору клиента</a>
+  </div>
+</div>
+
+<form action="/proxy/generate" method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+    <input type="hidden" name="client_id" value="{{ client.id }}" />
+
+    <!-- Выбор компании -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <h5 class="mb-2">Компания доверитель</h5>
+      </div>
+      {% for company in companies %}
+      <div class="col-12 col-md-4">
+        <div class="form-check border rounded p-3">
+          <input class="form-check-input" type="radio" name="company_id" 
+                 value="{{ company.id }}" id="company_{{ company.id }}"
+                 {% if loop.first %}checked{% endif %}>
+          <label class="form-check-label w-100" for="company_{{ company.id }}">
+            <strong>{{ company.name }}</strong>
+            <div class="small text-muted mt-1">
+              <div>{{ company.director_fio }}</div>
+              <div>{{ company.city }}, {{ company.address }}</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <hr class="my-4" />
+
+    <!-- Даты и номер -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <h5 class="mb-2">Даты и номер</h5>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">Номер (оставьте пустым)</label>
+        <input type="text" class="form-control" name="doc_number" id="doc_number" placeholder="Например: 65А78" maxlength="6">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">Дата выдачи</label>
+        <input type="text" class="form-control" name="proxy_date" value="{{ default_date }}" placeholder="25 мая 2025 г.">
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">Срок действия</label>
+        <input type="text" class="form-control" name="srok" value="{{ default_srok }}" placeholder="25 мая 2026 г.">
+      </div>
+    </div>
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="generateDocNumber()">🎲 Сгенерировать случайный номер</button>
+      </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <!-- Внимание: Доверенность на получателя платежа -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <div class="alert alert-warning py-2 small mb-2">
+          <strong>Внимание:</strong> Доверенность создается на получателя платежа из реквизитов счета, а не на клиента. 
+          Паспортные данные и адрес заполните для поверенного (получателя платежа).
+        </div>
+      </div>
+    </div>
+
+    <!-- Реквизиты для автоизвлечения ФИО -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <h5 class="mb-2">Реквизиты (для автоизвлечения ФИО поверенного)</h5>
+        <div class="alert alert-info py-2 small mb-2">
+          Вставьте текст реквизитов — ФИО поверенного заполнится автоматически
+        </div>
+      </div>
+      <div class="col-12">
+        <textarea class="form-control font-monospace" name="req_text" rows="4" 
+                  placeholder="Получатель&#10;БАЗЛОВ НИКИТА ЯНОВИЧ&#10;Номер счета получателя&#10;40817810971293909263&#10;Банк получателя&#10;ГПБ (АО)&#10;БИК&#10;044525823&#10;ИНН&#10;7744001497&#10;КПП&#10;997950001&#10;Кор. счет&#10;30101810200000000823"></textarea>
+      </div>
+      <div class="col-12">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="req_mode" value="auto" id="req_mode_auto" checked>
+          <label class="form-check-label" for="req_mode_auto">
+            Автораспознавание из текста выше
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <!-- Данные поверенного -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <h5 class="mb-2">Данные поверенного</h5>
+        {% if recent_recipients %}
+        <div class="alert alert-info py-2 small mb-2">
+          <strong>Быстрый выбор:</strong> Выберите получателя из последних 10
+        </div>
+        {% endif %}
+      </div>
+      
+      {% if recent_recipients %}
+      <div class="col-12">
+        <label class="form-label">Выбрать из последних получателей</label>
+        <select class="form-select" id="recipient_select" onchange="fillRecipient()">
+          <option value="">— Выбрать из списка —</option>
+          {% for recipient in recent_recipients %}
+          <option value="{{ recipient }}">{{ recipient }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">ФИО поверенного</label>
+        <input type="text" class="form-control" name="fio" id="fio_input" value="{{ prefill.fio }}" required>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Паспорт</label>
+        <input type="text" class="form-control" name="passport" value="{{ prefill.passport }}" required>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Кем выдан паспорт</label>
+        <input type="text" class="form-control" name="organ" value="{{ prefill.organ }}" placeholder="МВД России по г. Москва" required>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Дата выдачи паспорта</label>
+        <input type="date" class="form-control" name="vydan" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Адрес регистрации (опционально)</label>
+        <textarea class="form-control" name="address" rows="2">{{ prefill.address }}</textarea>
+      </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <!-- Данные автомобиля -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <h5 class="mb-2">Автомобиль</h5>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Марка и модель</label>
+        <input type="text" class="form-control" name="car_model" value="{{ prefill.car_model }}">
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">VIN</label>
+        <input type="text" class="form-control" name="vin" value="{{ prefill.vin }}">
+      </div>
+    </div>
+
+    <div class="col-12 d-grid mt-2">
+      <button class="btn btn-success" type="submit">Сгенерировать доверенность</button>
+    </div>
+  </div>
+</form>
+
+<script>
+// Генерация случайного номера документа
+function generateDocNumber() {
+  const letters = 'АВЕКМНОРСТУХ';
+  const num1 = Math.floor(Math.random() * 90) + 10; // 10-99
+  const letter = letters[Math.floor(Math.random() * letters.length)];
+  const num2 = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+  document.getElementById('doc_number').value = num1 + letter + num2;
+}
+
+// Заполнение ФИО из списка последних получателей
+function fillRecipient() {
+  const select = document.getElementById('recipient_select');
+  const fio = select.value;
+  if (fio) {
+    document.getElementById('fio_input').value = fio;
+  }
+}
+</script>
+{% endblock %}

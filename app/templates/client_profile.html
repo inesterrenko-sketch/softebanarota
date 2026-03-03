@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль клиента: {{ client.fio }} - ContractFill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .history-item {
+            border-left: 3px solid #0d6efd;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        .history-item.proxy {
+            border-left-color: #198754;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">ContractFill</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/dashboard">Главная</a>
+                <a class="nav-link" href="/documents">Документы</a>
+                <a class="nav-link" href="/invoice">Счета</a>
+                <a class="nav-link" href="/proxy">Доверенность</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h1 class="h4 mb-1">Профиль клиента</h1>
+                <div class="text-muted">ID: {{ client.id }} | {{ client.fio }}</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-secondary" href="/dashboard">← На главную</a>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal">Редактировать</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Основная информация -->
+            <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Основная информация</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="text-muted">ФИО:</td>
+                                <td><strong>{{ client.fio }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Паспорт:</td>
+                                <td>{{ client.passport or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Выдан:</td>
+                                <td>{{ client.organ or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Дата выдачи:</td>
+                                <td>{{ client.vydan or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Адрес:</td>
+                                <td>{{ client.address or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Телефон:</td>
+                                <td>{{ client.phone or '-' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Договор -->
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Договор</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="text-muted">№ договора:</td>
+                                <td><strong>{{ client.contract_no or '-' }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Дата:</td>
+                                <td>{{ client.contract_date or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Авто:</td>
+                                <td>{{ client.car_model or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">VIN:</td>
+                                <td>{{ client.vin or '-' }}</td>
+                            </tr>
+                        </table>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="/t/{{ client.last_template_id }}" class="btn btn-outline-primary btn-sm" {% if not client.last_template_id %}style="display:none"{% endif %}>
+                                Открыть договор
+                            </a>
+                            <a href="/invoice/create?client_id={{ client.id }}" class="btn btn-outline-primary btn-sm">
+                                Счёт на оплату
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Финансы -->
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Финансы</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="text-muted">Таможня (₽):</td>
+                                <td>{{ client.customs_amount or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">ДКП (₽):</td>
+                                <td>{{ client.dkp_amount or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">ТПО (BYN):</td>
+                                <td>{{ client.tpo_summa_byn or '-' }}</td>
+                            </tr>
+                            {% if tpo_price_eur %}
+                            <tr>
+                                <td class="text-muted">ТПО (EUR):</td>
+                                <td><strong>{{ tpo_price_eur }}</strong></td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="/tpo/create?client_id={{ client.id }}" class="btn btn-outline-primary btn-sm">
+                                Создать ТПО
+                            </a>
+                            <a href="/dkp/create?client_id={{ client.id }}" class="btn btn-outline-primary btn-sm">
+                                Создать ДКП
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- История и документы -->
+            <div class="col-lg-8">
+                <ul class="nav nav-pills mb-3" id="clientTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="requisites-tab" data-bs-toggle="pill" data-bs-target="#requisites" type="button">
+                            Реквизиты счетов
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="proxy-tab" data-bs-toggle="pill" data-bs-target="#proxy" type="button">
+                            Доверенности
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="contracts-tab" data-bs-toggle="pill" data-bs-target="#contracts" type="button">
+                            Договоры
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="clientTabsContent">
+                    <!-- Реквизиты счетов -->
+                    <div class="tab-pane fade show active" id="requisites" role="tabpanel">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                {% if invoice_history %}
+                                    {% for inv in invoice_history %}
+                                    <div class="history-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>{{ inv.created_at[:10] }}</strong>
+                                                <span class="badge bg-primary ms-2">{{ inv.amount }} ₽</span>
+                                            </div>
+                                            {% set inv_doc = invoices|selectattr('doc_id')|first %}
+                                            {% if inv_doc %}
+                                            <a href="/document/{{ inv_doc.doc_id }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                Скачать счёт
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <div>Получатель: {{ inv.recipient_fio }}</div>
+                                            <div>Банк: {{ inv.bank_name }}</div>
+                                            <div>Счёт: {{ inv.bank_rs }}</div>
+                                            <div>Кор. счёт: {{ inv.bank_ks }}</div>
+                                            <div>БИК: {{ inv.bank_bik }} | ИНН: {{ inv.bank_inn }}</div>
+                                            <div class="text-truncate">{{ inv.purpose }}</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center text-muted py-4">
+                                        Нет истории счетов
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Доверенности -->
+                    <div class="tab-pane fade" id="proxy" role="tabpanel">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                {% if proxy_history %}
+                                    {% for proxy in proxy_history %}
+                                    <div class="history-item proxy">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>{{ proxy.proxy_date }}</strong>
+                                                <span class="badge bg-success ms-2">Доверенность</span>
+                                            </div>
+                                            {% set proxy_doc = (generated_proxies|selectattr('doc_id')|list)[loop.index0] if loop.index0 < generated_proxies|length else none %}
+                                            {% if proxy_doc %}
+                                            <a href="/document/{{ proxy_doc.doc_id }}" class="btn btn-outline-success btn-sm" target="_blank">
+                                                Скачать
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <div>ФИО: {{ proxy.fio }}</div>
+                                            <div>Паспорт: {{ proxy.passport }}</div>
+                                            <div>Авто: {{ proxy.car_model }} ({{ proxy.vin }})</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center text-muted py-4">
+                                        Нет доверенностей
+                                        <div class="mt-2">
+                                            <a href="/proxy/create?client_id={{ client.id }}" class="btn btn-primary btn-sm">
+                                                Создать доверенность
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Договоры -->
+                    <div class="tab-pane fade" id="contracts" role="tabpanel">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                {% if tpos or dkps %}
+                                    <!-- ТПО -->
+                                    {% if tpos %}
+                                    <h6 class="border-bottom pb-2 mb-3">Таможенные документы (ТПО)</h6>
+                                    {% for tpo in tpos %}
+                                    <div class="history-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <strong>{{ tpo.created_at[:10] }}</strong>
+                                            <a href="/document/{{ tpo.doc_id }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                Скачать ТПО
+                                            </a>
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <div>ID: {{ tpo.doc_id[:8] }}</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                    
+                                    <!-- ДКП -->
+                                    {% if dkps %}
+                                    <h6 class="border-bottom pb-2 mb-3 mt-4">Договоры купли-продажи (ДКП)</h6>
+                                    {% for dkp in dkps %}
+                                    <div class="history-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <strong>{{ dkp.created_at[:10] }}</strong>
+                                            <a href="/document/{{ dkp.doc_id }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                                Скачать ДКП
+                                            </a>
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <div>ID: {{ dkp.doc_id[:8] }}</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                    
+                                    <!-- Старые контракты -->
+                                    {% if contracts %}
+                                    <h6 class="border-bottom pb-2 mb-3 mt-4">Архив договоров</h6>
+                                    {% for contract in contracts %}
+                                    <div class="history-item">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>{{ contract.contract_no or contract.id }}</strong>
+                                            <span class="badge bg-secondary">{{ contract.company }}</span>
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <div>Дата: {{ contract.contract_date or contract.created_at[:10] }}</div>
+                                            <div>Авто: {{ contract.car_model }}</div>
+                                            <div>Сумма: {{ contract.dkр_amount or '-' }}</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                {% else %}
+                                    <div class="text-center text-muted py-4">
+                                        Нет сгенерированных документов
+                                        <div class="mt-3 d-flex gap-2 justify-content-center">
+                                            <a href="/tpo/create?client_id={{ client.id }}" class="btn btn-outline-primary btn-sm">
+                                                Создать ТПО
+                                            </a>
+                                            <a href="/dkp/create?client_id={{ client.id }}" class="btn btn-outline-secondary btn-sm">
+                                                Создать ДКП
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактирование клиента</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/client/{{ client.id }}/update" method="post">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">ФИО</label>
+                                <input type="text" class="form-control" name="fio" value="{{ client.fio }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Телефон</label>
+                                <input type="text" class="form-control" name="phone" value="{{ client.phone }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Паспорт</label>
+                                <input type="text" class="form-control" name="passport" value="{{ client.passport }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Дата выдачи</label>
+                                <input type="text" class="form-control" name="vydan" value="{{ client.vydan }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Кем выдан</label>
+                                <textarea class="form-control" name="organ" rows="2">{{ client.organ }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Адрес</label>
+                                <textarea class="form-control" name="address" rows="2">{{ client.address }}</textarea>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">№ договора</label>
+                                <input type="text" class="form-control" name="contract_no" value="{{ client.contract_no }}">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Дата договора</label>
+                                <input type="text" class="form-control" name="contract_date" value="{{ client.contract_date }}">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Модель авто</label>
+                                <input type="text" class="form-control" name="car_model" value="{{ client.car_model }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">VIN</label>
+                                <input type="text" class="form-control" name="vin" value="{{ client.vin }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Объём</label>
+                                <input type="text" class="form-control" name="obem" value="{{ client.obem }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

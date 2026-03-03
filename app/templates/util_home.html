@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">📄 Письмо об утильсборе</h1>
+    <div class="text-muted small">Выбери клиента или создай нового → сформируй письмо Минской таможни.</div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h6 mb-2">Выбрать клиента</h2>
+        <form action="/util/create" method="post" id="selectClientForm">
+          <label class="form-label">Клиент</label>
+          <select class="form-select" id="clientSelect">
+            <option value="" selected>— Выбери клиента —</option>
+            {% for c in clients %}
+              <option 
+                value="{{ c.id }}"
+                data-fio="{{ c.fio }}"
+                data-passport="{{ c.passport }}"
+                data-address="{{ c.address }}"
+                data-car="{{ c.car_model }}"
+                data-vin="{{ c.vin }}"
+                data-company-inn="{{ c.company_inn }}"
+                data-company-address="{{ c.company_address }}">
+                ID {{ c.id }} — {{ c.fio }} — {{ c.car_model }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">Если клиента ещё нет — создай в правом блоке.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h6 mb-2">Создать нового клиента</h2>
+        <form action="/util/create" method="post" class="row g-3">
+          <div class="col-12">
+            <label class="form-label">ФИО владельца</label>
+            <input class="form-control" name="fio" id="fioInputNew" placeholder="ФИО клиента" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Паспорт</label>
+            <input class="form-control" name="passport" id="passportInputNew" placeholder="АВ 1234567" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Адрес клиента</label>
+            <input class="form-control" name="address" id="addressInputNew" placeholder="г. Минск, ул. Примерная, д. 1" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Марка авто</label>
+            <input class="form-control" name="car" id="carInputNew" placeholder="Mercedes-Benz GLE" />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">VIN</label>
+            <input class="form-control" name="vin" id="vinInputNew" placeholder="WDB1234567890XXXXX" />
+          </div>
+          <div class="col-12 d-grid">
+            <button class="btn btn-success" type="submit">Создать и перейти к заполнению</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-body">
+    <h2 class="h6 mb-3">Заполни данные письма</h2>
+    <form action="/util/create" method="post" class="row g-3">
+      <input type="hidden" name="client_id" id="clientIdInput" />
+      <input type="hidden" name="company_id" id="companyIdInput" />
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">ФИО владельца *</label>
+        <input class="form-control" name="fio" id="fioInput" required placeholder="Иванов Иван Иванович" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Паспорт *</label>
+        <input class="form-control" name="passport" id="passportInput" required placeholder="АВ 1234567" />
+      </div>
+      
+      <div class="col-12">
+        <label class="form-label">Адрес клиента *</label>
+        <input class="form-control" name="address" id="addressInput" required placeholder="г. Минск, ул. Примерная, д. 1" />
+        <div class="form-text">Адрес клиента (не используется в шаблоне)</div>
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Название компании *</label>
+        <div class="input-group">
+          <select class="form-select" id="companySelect" onchange="loadCompanyData()">
+            <option value="">— Выбрать из списка —</option>
+            {% for comp in companies %}
+            <option value="{{ comp.id }}">{{ comp.name }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('companyInput').value=''; document.getElementById('innInput').value=''; document.getElementById('companyAddressInput').value='';">Очистить</button>
+        </div>
+        <input class="form-control mt-2" name="company" id="companyInput" required placeholder="Или введите вручную" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">ИНН компании *</label>
+        <input class="form-control" name="inn" id="innInput" required placeholder="123456789" />
+      </div>
+      
+      <div class="col-12">
+        <label class="form-label">Юридический адрес компании *</label>
+        <input class="form-control" name="company_address" id="companyAddressInput" required placeholder="г. Москва, ул. Примерная, д. 1" />
+        <div class="form-text">Этот адрес будет использован в шаблоне письма</div>
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Марка авто *</label>
+        <input class="form-control" name="car" id="carInput" required placeholder="Mercedes-Benz GLE" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Год выпуска *</label>
+        <input class="form-control" name="year_car" id="yearCarInput" required placeholder="2020" />
+      </div>
+      
+      <div class="col-12">
+        <label class="form-label">VIN *</label>
+        <input class="form-control" name="vin" id="vinInput" required placeholder="WDB1234567890XXXXX" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Номер договора *</label>
+        <input class="form-control" name="nomer" required placeholder="12345" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Банк *</label>
+        <input class="form-control" name="bank" required placeholder="ОАО 'АСБ Беларусбанк'" />
+      </div>
+      
+      <div class="col-12">
+        <label class="form-label">Расчетный счет *</label>
+        <input class="form-control" name="account" required placeholder="BY12AAAA12345678901234567890" />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <label class="form-label">Сумма утильсбора (₽) *</label>
+        <input class="form-control" name="summa_rub" required placeholder="150000" />
+        <div class="form-text">Будет автоматически конвертирована в слова</div>
+      </div>
+      
+      <div class="col-12 d-grid">
+        <button class="btn btn-primary btn-lg" type="submit">
+          📄 Создать письмо
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if clients|length == 0 %}
+  <div class="alert alert-warning mt-4">Клиентов пока нет. Создай нового справа.</div>
+{% endif %}
+
+<script>
+// Данные компаний (передаются с сервера)
+const companiesData = {{ companies_json | safe }};
+
+// Загрузка данных компании при выборе из списка
+function loadCompanyData() {
+  const select = document.getElementById('companySelect');
+  const companyId = select.value;
+  
+  if (!companyId) {
+    document.getElementById('companyIdInput').value = '';
+    return;
+  }
+  
+  const company = companiesData.find(c => c.id === companyId);
+  
+  if (company) {
+    document.getElementById('companyIdInput').value = companyId;
+    document.getElementById('companyInput').value = company.name || '';
+    document.getElementById('innInput').value = company.inn || '';
+    document.getElementById('companyAddressInput').value = company.address || '';
+  }
+}
+
+// Подтягивание данных клиента при выборе
+document.getElementById('clientSelect').addEventListener('change', function() {
+  const selected = this.options[this.selectedIndex];
+  if (!selected.value) {
+    document.getElementById('clientIdInput').value = '';
+    document.getElementById('fioInput').value = '';
+    document.getElementById('passportInput').value = '';
+    document.getElementById('addressInput').value = '';
+    document.getElementById('carInput').value = '';
+    document.getElementById('yearCarInput').value = '';
+    document.getElementById('vinInput').value = '';
+    document.getElementById('companyInput').value = '';
+    document.getElementById('innInput').value = '';
+    document.getElementById('companyAddressInput').value = '';
+    document.getElementById('companySelect').value = '';
+    document.getElementById('companyIdInput').value = '';
+    return;
+  }
+  
+  // Загружаем полные данные клиента через API для получения данных из договора
+  fetch('/api/clients/' + selected.value)
+    .then(r => r.json())
+    .then(client => {
+      document.getElementById('clientIdInput').value = selected.value;
+      document.getElementById('fioInput').value = client.fio || '';
+      document.getElementById('passportInput').value = client.passport || '';
+      document.getElementById('addressInput').value = client.address || '';
+      document.getElementById('carInput').value = client.car_model || '';
+      document.getElementById('yearCarInput').value = client.vypusk || '';
+      document.getElementById('vinInput').value = client.vin || '';
+      
+      // Подтягиваем данные компании
+      document.getElementById('innInput').value = client.company_inn || '';
+      document.getElementById('companyAddressInput').value = client.company_address || '';
+      document.getElementById('companyInput').value = client.company_name || '';
+      
+      // Если у клиента привязана компания, выбираем её в списке
+      if (client.company_id) {
+        document.getElementById('companySelect').value = client.company_id;
+        document.getElementById('companyIdInput').value = client.company_id;
+      }
+    })
+    .catch(err => {
+      console.error('Ошибка загрузки данных клиента:', err);
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-1">Курсы валют</h1>
+    <div class="text-muted small">Используется для конвертации при генерации ТПО</div>
+  </div>
+  <div>
+    <a class="btn btn-outline-secondary" href="/dashboard">← назад</a>
+  </div>
+</div>
+
+<form action="/settings" method="post" class="card shadow-sm border-0">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-12 col-md-4">
+        <label class="form-label">1 RUB = BYN</label>
+        <input class="form-control" name="rub_to_byn" value="{{ settings.currency.rub_to_byn if settings and settings.currency else '' }}" placeholder="0.040" />
+        <div class="form-text">Напр.: 1 RUB = 0.0400 BYN</div>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">1 EUR = BYN</label>
+        <input class="form-control" name="eur_byn" value="{{ settings.currency.eur_byn if settings and settings.currency else '' }}" placeholder="4.0000" />
+        <div class="form-text">Официальный курс (BYN за 1 EUR)</div>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">1 USD = BYN</label>
+        <input class="form-control" name="usd_byn" value="{{ settings.currency.usd_byn if settings and settings.currency else '' }}" placeholder="3.4000" />
+        <div class="form-text">Официальный курс (BYN за 1 USD)</div>
+      </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-primary" type="submit">Сохранить</button>
+      <a class="btn btn-outline-secondary" href="/tpo">Открыть ТПО</a>
+    </div>
+
+    <div class="text-muted small mt-3">
+      Сейчас: 1 RUB → <span class="fw-semibold">{{ '%.4f' % currency['rub_to_byn'] }} BYN</span>,
+      1 EUR = <span class="fw-semibold">{{ '%.4f' % currency['eur_byn'] }} BYN</span>,
+      1 USD = <span class="fw-semibold">{{ '%.4f' % currency['usd_byn'] }} BYN</span>.
+    </div>
+  </div>
+</form>
+{% endblock %}

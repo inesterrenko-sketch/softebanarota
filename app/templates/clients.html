@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Клиенты - ContractFill{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">Клиенты</h1>
+            <p class="text-muted mb-0">Управление клиентами и история документов</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/documents" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3.5A.5.5 0 0 1 8 8V4.5zm1 6.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1H8v-3.5a.5.5 0 0 0-1 0V8.5h3a.5.5 0 0 0 0-1H8v3.5z"/>
+                </svg>
+                Новый документ
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="search-box card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-10">
+                <input type="text" name="search" class="form-control form-control-lg" 
+                       placeholder="🔍 Поиск по ФИО, телефону, номеру договора, VIN..." 
+                       value="{{ search }}">
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg flex-fill">Найти</button>
+                {% if search %}
+                <a href="/clients" class="btn btn-outline-secondary btn-lg">✕</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+{% if clients %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card card bg-primary text-white">
+            <div class="card-body">
+                <div class="stat-value">{{ clients|length }}</div>
+                <div class="stat-label">Всего клиентов</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card bg-success text-white">
+            <div class="card-body">
+                <div class="stat-value">{{ clients|selectattr('contract_no')|list|length }}</div>
+                <div class="stat-label">С договорами</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card bg-info text-white">
+            <div class="card-body">
+                <div class="stat-value">{{ clients|selectattr('car_model')|list|length }}</div>
+                <div class="stat-label">С авто</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card card bg-warning text-dark">
+            <div class="card-body">
+                <div class="stat-value">{{ clients|selectattr('dkp_amount')|list|length }}</div>
+                <div class="stat-label">С суммами ДКП</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Clients Grid -->
+{% if clients %}
+<div class="clients-grid">
+    {% for c in clients %}
+    <div class="client-card card" onclick="location.href='/client/{{ c.id }}'">
+        <div class="card-body">
+            <div class="client-header d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="client-name mb-1">{{ c.fio }}</h5>
+                    <span class="client-id text-muted small">ID: {{ c.id }}</span>
+                </div>
+                <div class="dropdown" onclick="event.stopPropagation()">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        ⋮
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/client/{{ c.id }}">📋 Открыть профиль</a></li>
+                        <li><a class="dropdown-item" href="/invoice/create?client_id={{ c.id }}">📄 Счёт на оплату</a></li>
+                        <li><a class="dropdown-item" href="/tpo/create?client_id={{ c.id }}">🚗 ТПО</a></li>
+                        <li><a class="dropdown-item" href="/proxy/create?client_id={{ c.id }}">📋 Доверенность</a></li>
+                        <li><a class="dropdown-item" href="/dkp/create?client_id={{ c.id }}">🇩🇪 ДКП</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="/client/{{ c.id }}/delete" method="post" onsubmit="return confirm('Удалить клиента {{ c.fio }}? Это действие нельзя отменить!');">
+                                <button type="submit" class="dropdown-item text-danger">🗑 Удалить клиента</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="client-info">
+                {% if c.phone %}
+                <div class="info-row">
+                    <span class="info-icon">📞</span>
+                    <span>{{ c.phone }}</span>
+                </div>
+                {% endif %}
+                
+                {% if c.contract_no %}
+                <div class="info-row">
+                    <span class="info-icon">📝</span>
+                    <span>Договор №{{ c.contract_no }}{% if c.contract_date %} от {{ c.contract_date }}{% endif %}</span>
+                </div>
+                {% endif %}
+                
+                {% if c.car_model %}
+                <div class="info-row">
+                    <span class="info-icon">🚗</span>
+                    <span>{{ c.car_model }}</span>
+                </div>
+                {% endif %}
+                
+                {% if c.vin %}
+                <div class="info-row">
+                    <span class="info-icon">🔢</span>
+                    <span class="font-monospace small">{{ c.vin }}</span>
+                </div>
+                {% endif %}
+                
+                {% if c.customs_amount or c.dkp_amount %}
+                <div class="info-row">
+                    <span class="info-icon">💰</span>
+                    <span>
+                        {% if c.customs_amount %}Таможня: {{ c.customs_amount }}{% endif %}
+                        {% if c.dkp_amount %}<br>ДКП: {{ c.dkp_amount }}{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="client-actions mt-3 pt-3 border-top">
+                <a href="/client/{{ c.id }}" class="btn btn-outline-primary btn-sm w-100">Открыть профиль</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state card">
+    <div class="card-body text-center py-5">
+        <div class="empty-icon mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8Zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022ZM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.893-.817l-2.356-.003a.5.5 0 0 0-.5.5v.002l.002.002a.5.5 0 0 0 .5.5H6a.5.5 0 0 0 0-1h.732l.003 2.843a.5.5 0 0 0 .5.5h-2a.5.5 0 0 0-.5-.5h-.653a5.543 5.543 0 0 0-1.453-.232c-.489-.1-.982-.216-1.453-.232l-.003 2.843a.5.5 0 0 0 .5.5H6a.5.5 0 0 0 0-1H3.5l.003-2.843c.003.048.058.137.173.264.38.423.991 1.057 1.78 1.498.622.337 1.457.672 2.435 1.034A5.977 5.977 0 0 0 11 9c4 0 5 3 5 4 0 .667-.333 1-1 1h-4.216Z"/>
+            </svg>
+        </div>
+        <h4 class="mb-2">Клиентов пока нет</h4>
+        <p class="text-muted mb-4">Клиенты добавляются автоматически при создании документов</p>
+        <a href="/documents" class="btn btn-primary btn-lg">Создать первый документ</a>
+    </div>
+</div>
+{% endif %}
+
+{% if clients|length > 50 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item disabled">
+            <span class="page-link">Показано последние 500 клиентов</span>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
