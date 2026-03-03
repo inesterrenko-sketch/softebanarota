@@ -1,0 +1,41 @@
+# Systemd service для ContractFill
+# Поместите этот файл в /etc/systemd/system/contractfill.service
+# 
+# Команды для управления:
+# sudo systemctl start contractfill    # Запустить
+# sudo systemctl stop contractfill     # Остановить
+# sudo systemctl restart contractfill  # Перезапустить
+# sudo systemctl status contractfill   # Проверить статус
+# sudo systemctl enable contractfill   # Автозапуск при загрузке системы
+
+[Unit]
+Description=ContractFill FastAPI Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/путь/к/вашему/contract_filler_app
+Environment="PATH=/usr/bin:/usr/local/bin"
+
+# Запуск с помощью uvicorn
+ExecStart=/usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+# Или с помощью python напрямую
+# ExecStart=/usr/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Автоматический перезапуск при падении
+Restart=always
+RestartSec=3
+
+# Логи
+StandardOutput=journal
+StandardError=journal
+
+# Безопасность
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

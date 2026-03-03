@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # FastAPI приложение
+  contractfill:
+    build: .
+    container_name: contractfill_app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Монтируем директорию с данными для сохранения между перезапусками
+      - ./app/data:/app/app/data
+      # Монтируем логи
+      - ./logs:/app/logs
+    environment:
+      - TZ=Europe/Moscow
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - contractfill_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx как reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: contractfill_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./app/static:/usr/share/nginx/html/static
+      # Для SSL сертификатов (опционально)
+      # - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - contractfill
+    restart: unless-stopped
+    networks:
+      - contractfill_network
+
+networks:
+  contractfill_network:
+    driver: bridge
+
+# Для использования:
+# 1. Установите Docker и Docker Compose
+# 2. В директории проекта выполните: docker-compose up -d
+# 3. Приложение будет доступно по адресу http://localhost или http://ваш-ip-адрес
+# 4. Для остановки: docker-compose down
+# 5. Для просмотра логов: docker-compose logs -f
+# 6. Для перезапуска: docker-compose restart
